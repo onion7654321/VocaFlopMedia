@@ -40,7 +40,20 @@ def package():
     if sys.platform == "win32":
         from package_release import package as portable
         portable(ROOT)
-        iscc = shutil.which("ISCC") or str(Path(os.environ.get("ProgramFiles(x86)", r"C:\Program Files (x86)")) / "Inno Setup 6" / "ISCC.exe")
+        iscc = shutil.which("ISCC.exe") or next(
+            (
+                str(path) for path in [
+                    Path(r"C:\Program Files\Inno Setup 7\ISCC.exe"),
+                    Path(r"C:\Program Files (x86)\Inno Setup 7\ISCC.exe"),
+                    Path(r"C:\Program Files\Inno Setup 6\ISCC.exe"),
+                    Path(r"C:\Program Files (x86)\Inno Setup 6\ISCC.exe"),
+                ]
+                if path.is_file()
+            ),
+            None,
+        )
+        if not iscc:
+            raise RuntimeError("Inno Setup 6 or 7 is required.")
         run(iscc, f"/DVersion={VERSION}", "packaging/windows.iss")
     elif sys.platform == "darwin":
         app = dist / "Vocaflop.app"
