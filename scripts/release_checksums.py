@@ -4,7 +4,7 @@ import hashlib
 root = Path(__file__).resolve().parents[1] / 'release'
 lines = []
 for path in sorted(root.iterdir()):
-    if path.name.endswith(('.zip', '.tar.gz')):
+    if path.is_file() and path.name.endswith(('.zip', '.tar.gz', '.exe', '.dmg', '.deb', '.AppImage')):
         with path.open('rb') as stream:
             lines.append(f'{hashlib.file_digest(stream, "sha256").hexdigest()}  {path.name}')
 if not lines:

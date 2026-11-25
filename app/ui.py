@@ -1608,7 +1608,7 @@ class VocaflopUI:
                     ft.Divider(height=8, color=self.palette()[3]),
                     ft.Column(spacing=8, controls=[self.secondary('App update feed (HTTPS)', size=12),
                         ft.TextField(value=self.settings['app_update_manifest'],
-                            hint_text='Optional', height=54,
+                            hint_text='Default: GitHub Releases', height=54,
                             on_blur=lambda e: self.persist('app_update_manifest', e.control.value))]),
                 ]), padding=23),
             ]),

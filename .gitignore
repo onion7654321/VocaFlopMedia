@@ -30,3 +30,13 @@ release/
 *.dmg
 *.app/
 .ruff_cache/
+*.egg-info/
+.eggs/
+.coverage
+.coverage.*
+htmlcov/
+*.AppImage
+*.deb
+artifacts/
+*.pem
+*.key

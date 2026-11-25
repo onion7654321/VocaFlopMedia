@@ -1,0 +1,7 @@
+[Desktop Entry]
+Type=Application
+Name=VocaFlop Media Downloader
+Exec=vocaflop
+Icon=vocaflop
+Categories=AudioVideo;Network;
+Terminal=false

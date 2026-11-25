@@ -1,0 +1,28 @@
+[build-system]
+requires = ["setuptools>=69"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "vocaflop-media"
+dynamic = ["version"]
+description = "Desktop media downloader"
+readme = "README.md"
+requires-python = ">=3.11,<3.14"
+dependencies = ["flet[desktop]==1.0.5", "flet-video==1.0.5", "packaging>=24.2,<27"]
+
+[project.optional-dependencies]
+build = ["pyinstaller>=6,<7"]
+dev = ["pytest>=8,<10", "ruff>=0.9,<1", "pip-audit>=2.7,<3"]
+
+[project.urls]
+Repository = "https://github.com/onion7654321/VocaFlopMedia"
+
+[tool.setuptools.dynamic]
+version = {attr = "app.__version__"}
+
+[tool.setuptools.packages.find]
+include = ["app", "app.*"]
+namespaces = false
+
+[tool.ruff.lint]
+select = ["E9", "F63", "F7", "F82"]

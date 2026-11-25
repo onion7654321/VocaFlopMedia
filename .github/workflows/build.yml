@@ -1,4 +1,4 @@
-name: Build desktop packages
+name: Desktop distribution
 on:
   workflow_dispatch:
   push:
@@ -21,39 +21,47 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - name: Install Linux dependencies
-        if: runner.os == 'Linux'
-        run: sudo apt-get update && sudo apt-get install -y libgtk-3-0 libmpv1 libsecret-1-0 ffmpeg
-      - run: python -m pip install -r requirements.txt
-      - run: python -m unittest discover -s tests -q
-      - name: Build Windows
-        if: runner.os == 'Windows'
-        run: flet pack main.py --name Vocaflop --icon assets/logo.ico --onedir --yes
-      - name: Build Linux
-        if: runner.os == 'Linux'
-        run: flet pack main.py --name Vocaflop --onedir --yes
-      - name: Build macOS
-        if: runner.os == 'macOS'
-        run: flet pack main.py --name Vocaflop --onedir --yes
-      - name: Package Windows
-        if: runner.os == 'Windows'
-        run: python scripts/package_release.py
-      - name: Package Linux
+      - name: Validate release version
+        if: startsWith(github.ref, 'refs/tags/')
+        run: python -c "import os; from app import __version__; assert os.environ['GITHUB_REF_NAME'] == 'v'+__version__"
+      - name: Install Linux packaging tools
         if: runner.os == 'Linux'
         run: |
-          mkdir -p release
-          test -x dist/Vocaflop/Vocaflop
-          tar -czf release/Vocaflop-Linux-x64.tar.gz -C dist Vocaflop
-      - name: Package macOS
-        if: runner.os == 'macOS'
-        run: |
-          mkdir -p release
-          test -d dist/Vocaflop.app
-          ditto -c -k --sequesterRsrc --keepParent dist/Vocaflop.app release/Vocaflop-${{ matrix.platform }}.zip
-      - name: Checksums
-        run: python scripts/release_checksums.py
+          sudo apt-get update
+          sudo apt-get install -y libgtk-3-0 libmpv1 libsecret-1-0 ffmpeg
+          curl --fail --location --retry 3 https://github.com/AppImage/appimagetool/releases/download/1.9.0/appimagetool-x86_64.AppImage -o /tmp/appimagetool
+          chmod +x /tmp/appimagetool
+          sudo install /tmp/appimagetool /usr/local/bin/appimagetool
+      - name: Install Windows packaging tools
+        if: runner.os == 'Windows'
+        run: choco install innosetup --version=6.4.3 -y --no-progress
+      - run: python -m pip install '.[build,dev]'
+      - run: python -m pip check
+      - run: python -m ruff check app scripts tests main.py
+      - run: python scripts/build.py
       - uses: actions/upload-artifact@v4
         with:
           name: Vocaflop-${{ matrix.platform }}
           path: release/*
           if-no-files-found: error
+  release:
+    if: startsWith(github.ref, 'refs/tags/')
+    needs: build
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: Vocaflop-*
+          path: artifacts
+      - name: Collect packages
+        run: |
+          mkdir release
+          find artifacts -type f ! -name SHA256SUMS.txt -exec cp '{}' release/ ';'
+          python scripts/release_checksums.py
+      - name: Create draft release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release create "$GITHUB_REF_NAME" release/* --verify-tag --draft --generate-notes --title "VocaFlopMedia $GITHUB_REF_NAME"

@@ -497,7 +497,7 @@ async def download(job: DownloadJob, settings: dict, on_progress: Callable[[floa
 def check_app_update(manifest_url: str) -> dict | None:
     """Check optional publisher-controlled HTTPS JSON manifest, never auto-run installers."""
     if not manifest_url:
-        return None
+        return check_github_app_update()
     if not manifest_url.startswith("https://"):
         raise RuntimeError("App update URL must use HTTPS.")
     with urllib.request.urlopen(urllib.request.Request(manifest_url, headers=HEADERS), timeout=12) as response:
@@ -512,10 +512,36 @@ def check_app_update(manifest_url: str) -> dict | None:
     return {"version": str(data["version"]), "url": url, "sha256": digest}
 
 
+def check_github_app_update():
+    from packaging.version import Version
+    from .platforms import system, architecture
+    endpoint = "https://api.github.com/repos/onion7654321/VocaFlopMedia/releases/latest"
+    with urllib.request.urlopen(urllib.request.Request(endpoint, headers=HEADERS), timeout=12) as response:
+        release = json.loads(response.read(1_000_000))
+    version = release["tag_name"].removeprefix("v")
+    if release.get("draft") or release.get("prerelease") or Version(version) <= Version(__version__):
+        return None
+    suffix = {("Windows", "x64"): "Windows-x64-Setup.exe", ("Linux", "x64"): "Linux-x86_64.AppImage", ("Darwin", "x64"): "macOS-Intel.dmg", ("Darwin", "arm64"): "macOS-ARM64.dmg"}.get((system(), architecture()))
+    if not suffix:
+        return None
+    assets = {a["name"]: a for a in release.get("assets", [])}
+    name = f"Vocaflop-{version}-{suffix}"
+    if name not in assets or "SHA256SUMS.txt" not in assets:
+        return None
+    base = f"https://github.com/onion7654321/VocaFlopMedia/releases/download/v{version}/"
+    with urllib.request.urlopen(urllib.request.Request(base + "SHA256SUMS.txt", headers=HEADERS), timeout=12) as response:
+        checksums = response.read(100_000).decode("utf-8")
+    for line in checksums.splitlines():
+        fields = line.split(maxsplit=1)
+        if len(fields) == 2 and fields[1] == name and re.fullmatch(r"[a-f0-9]{64}", fields[0]):
+            return {"version": version, "url": base + name, "sha256": fields[0]}
+    return None
+
+
 def stage_app_update(update: dict) -> Path:
     folder = APP_DIR / "updates"
     folder.mkdir(parents=True, exist_ok=True)
-    suffix = next((x for x in (".tar.gz", ".zip", ".dmg", ".exe") if urlparse(update["url"]).path.lower().endswith(x)), ".downloaded")
+    suffix = next((x for x in (".tar.gz", ".zip", ".dmg", ".exe", ".appimage") if urlparse(update["url"]).path.lower().endswith(x)), ".downloaded")
     out = folder / f"Vocaflop_{re.sub('[^a-zA-Z0-9_.-]', '_', update['version'])}{suffix}"
     temp = out.with_suffix(".download")
     h = hashlib.sha256()
@@ -528,9 +554,15 @@ def stage_app_update(update: dict) -> Path:
                     raise RuntimeError("Installer exceeds 500 MB.")
                 h.update(chunk)
                 dst.write(chunk)
-        if h.hexdigest() != update["sha256"] or temp.open("rb").read(2) != b"MZ":
+        if h.hexdigest() != update["sha256"]:
+            raise RuntimeError("Installer verification failed.")
+        with temp.open("rb") as stream:
+            magic = stream.read(4)
+        if (suffix == ".exe" and not magic.startswith(b"MZ")) or (suffix == ".appimage" and magic != b"\x7fELF"):
             raise RuntimeError("Installer verification failed.")
         temp.replace(out)
+        if suffix == ".appimage":
+            out.chmod(0o700)
         return out
     finally:
         temp.unlink(missing_ok=True)
