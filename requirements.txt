@@ -1,0 +1,4 @@
+flet[desktop]==1.0.5
+flet-video==1.0.5
+packaging>=24.2,<27
+pyinstaller>=6.0,<7
