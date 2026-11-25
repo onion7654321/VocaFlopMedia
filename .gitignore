@@ -52,3 +52,25 @@ cookies*.txt
 .DS_Store
 Thumbs.db
 desktop.ini
+
+# Additional cache and build files
+*.egg-info/
+.eggs/
+.cache/
+.coverage.*
+
+# Temporary download files
+*.tmp
+*.temp
+*.part-Frag*
+*.crdownload
+
+# SQLite temporary files
+*.sqlite-wal
+*.sqlite-shm
+*.sqlite3-wal
+*.sqlite3-shm
+
+# Local credentials
+*.pem
+*.key
