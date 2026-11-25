@@ -1,26 +1,54 @@
-.venv/
-venv/
+
+# Python
 __pycache__/
 *.py[cod]
-.pytest_cache/
-.mypy_cache/
-.vscode/
-.idea/
+.venv/
+venv/
+env/
+
+# Build and release
 build/
 dist/
+release/
 *.spec
-*.zip
 *.exe
 *.dll
+*.zip
+
+# External tools
 tools/
-.vocaflop-partials/
-*.part
-*.log
-*.sqlite3
-*.sqlite3-*
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.ruff_cache/
+.mypy_cache/
+
+# IDE
+.vscode/
+.idea/
+
+# Application data
 settings.json
-cookies*.txt
+history.db
+*.sqlite
+*.sqlite3
+*.db
+*.db-wal
+*.db-shm
+*.log
+downloads/
+*.part
+*.ytdl
+
+# Credentials
 .env
 .env.*
+!.env.example
+cookies*.txt
 
-release/
+# Operating system
+.DS_Store
+Thumbs.db
+desktop.ini
