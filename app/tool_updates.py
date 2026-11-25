@@ -18,6 +18,7 @@ from pathlib import Path
 from packaging.version import Version, InvalidVersion
 from .storage import BIN_DIR, load_settings
 from .toolchain import resolve_tool, tool_env
+from .platforms import system, architecture, deno_asset, package_manager_hint
 
 HEADERS = {'Accept': 'application/vnd.github+json', 'User-Agent': 'Vocaflop/2.6'}
 DENO_API = 'https://api.github.com/repos/denoland/deno/releases/latest'
@@ -64,14 +65,16 @@ def check_deno() -> dict:
         newer = not installed or Version(latest) > Version(installed)
     except InvalidVersion:
         newer = not installed
-    asset_name = 'deno-x86_64-pc-windows-msvc.zip'
+    asset_name = deno_asset()
     if not _asset(release, asset_name):
-        raise ValueError('Deno Windows asset unavailable')
+        raise ValueError('Deno asset unavailable for this platform')
     return {'name': 'deno', 'installed': installed or 'missing', 'latest': latest,
             'needs_update': newer, 'release': release, 'asset_name': asset_name}
 
 
 def check_ffmpeg() -> dict:
+    if system() != "Windows" or architecture() != "x64":
+        return {"name": "ffmpeg", "installed": _version("ffmpeg") or "missing", "needs_update": False, "manual": package_manager_hint()}
     release = _get_json(FFMPEG_API)
     # Compare stable branches rather than daily build IDs.
     names = [a.get('name', '') for a in release.get('assets', [])]
@@ -118,12 +121,14 @@ def _expected_sha(release: dict, asset_name: str) -> str:
 
 def install_tool(info: dict) -> str:
     """Install to app-owned AppData folder. Never overwrite arbitrary PATH binaries."""
-    if os.name != 'nt':
-        raise RuntimeError('Tool installer supports Windows only')
     name = info['name']
     if name not in ('deno', 'ffmpeg'):
         raise ValueError('Unexpected tool')
+    if name == 'ffmpeg' and (system() != 'Windows' or architecture() != 'x64'):
+        raise RuntimeError(package_manager_hint())
     asset_name = info['asset_name']
+    if name == 'deno' and asset_name != deno_asset():
+        raise ValueError('Incorrect Deno platform archive')
     release = info['release']
     source = _asset(release, asset_name).get('browser_download_url', '')
     if not source.startswith('https://github.com/'):
@@ -145,7 +150,7 @@ def install_tool(info: dict) -> str:
             raise RuntimeError('Tool SHA256 mismatch; installation cancelled')
         target = BIN_DIR / ('deno' if name == 'deno' else 'ffmpeg/bin')
         target.mkdir(parents=True, exist_ok=True)
-        wanted = {'deno.exe'} if name == 'deno' else {'ffmpeg.exe', 'ffprobe.exe'}
+        wanted = {('deno.exe' if system() == 'Windows' else 'deno')} if name == 'deno' else {'ffmpeg.exe', 'ffprobe.exe'}
         with zipfile.ZipFile(archive) as z:
             entries = {Path(x.filename.replace('\\', '/')).name.lower(): x
                        for x in z.infolist() if not x.is_dir() and
@@ -161,5 +166,7 @@ def install_tool(info: dict) -> str:
                     while block := src.read(1024 * 1024):
                         dst.write(block)
             for binary in wanted:
+                if system() != 'Windows':
+                    (target / (binary + '.new')).chmod(0o755)
                 (target / (binary + '.new')).replace(target / binary)
     return f'{name.upper()} {info["latest"]} installed. Restart Vocaflop.'

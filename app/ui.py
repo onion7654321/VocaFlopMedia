@@ -22,6 +22,7 @@ from .helpers import (extract_urls, clean_pasted_text, fmt_time, to_seconds, is_
 from .storage import load_settings, save_settings, History
 from .toolchain import resolve_tool
 from .tool_updates import check_deno, check_ffmpeg, install_tool
+from .platforms import open_directory, shutdown_command, package_manager_hint, system
 from .core import (check_ytdlp_update, install_ytdlp, check_app_update, stage_app_update,
                    probe, download, ffmpeg_dir, cli_exe, discard_partial)
 
@@ -823,10 +824,7 @@ class VocaflopUI:
     def open_folder(self, file="", folder=""):
         try:
             target = download_folder(file, folder)
-            if os.name == "nt":
-                os.startfile(str(target))
-            else:
-                raise OSError("Open folder is available on Windows.")
+            open_directory(target)
         except (OSError, ValueError) as ex:
             self.notice(str(ex), error=True, scope="folder")
         else:
@@ -1349,7 +1347,7 @@ class VocaflopUI:
 
     # Settings
     def set_shutdown(self, enabled):
-        self.shutdown_enabled = enabled and os.name == "nt"
+        self.shutdown_enabled = enabled and shutdown_command() is not None
         if not self.shutdown_enabled:
             self.cancel_shutdown_countdown()
         self.page.update()
@@ -1369,7 +1367,7 @@ class VocaflopUI:
         self.notice("Shutdown cancelled.")
 
     def maybe_shutdown(self):
-        if (not self.shutdown_enabled or os.name != "nt" or self.shutdown_task is not None
+        if (not self.shutdown_enabled or shutdown_command() is None or self.shutdown_task is not None
                 or not ready_to_shutdown(self.items.values(), self.cycle_results,
                                          self.pending_downloads, self.batch_dispatches)):
             return
@@ -1387,7 +1385,7 @@ class VocaflopUI:
                     and ready_to_shutdown(self.items.values(), self.cycle_results,
                                           self.pending_downloads, self.batch_dispatches)):
                 self.shutdown_enabled = False
-                subprocess.run([str(Path(os.environ.get("SystemRoot", r"C:\Windows")) / "System32" / "shutdown.exe"), "/s", "/t", "0"], check=True)
+                await asyncio.to_thread(subprocess.run, shutdown_command(), check=True, timeout=30)
         except asyncio.CancelledError:
             raise
         except Exception as ex:
@@ -1511,7 +1509,7 @@ class VocaflopUI:
             return ft.Row(spacing=8, controls=[ft.Icon(ft.Icons.CHECK_CIRCLE, color=GREEN, size=15),
                  ft.Text(f'{label}: {binary}', selectable=True, size=11, no_wrap=False, expand=True)])
         return ft.Row(spacing=8, controls=[ft.Icon(ft.Icons.ERROR_OUTLINE, color=RED, size=15),
-                                          ft.Text(f'{label}: Not found · click Browse above to locate the folder', size=11, color=RED)])
+                                          ft.Text(f'{label}: Not found · ' + (package_manager_hint() if name in ('ffmpeg', 'ffprobe') and system() != 'Windows' else 'click Browse above to locate the folder'), size=11, color=RED)])
 
     def render_settings(self):
         if self.current_tab != 'Settings':
@@ -1545,7 +1543,7 @@ class VocaflopUI:
                         ]),
                     ]),
                     ft.Row(spacing=12, controls=[
-                        ft.Switch(value=self.shutdown_enabled, disabled=os.name != "nt",
+                        ft.Switch(value=self.shutdown_enabled, disabled=shutdown_command() is None,
                                   on_change=lambda e: self.set_shutdown(bool(e.control.value))),
                         ft.Column(expand=True, spacing=3, controls=[
                             ft.Text("Shut down computer after downloads", size=13),
@@ -1601,7 +1599,7 @@ class VocaflopUI:
                                  [('none','Off'), ('chrome','Chrome'), ('edge','Edge'),
                                   ('firefox','Firefox'), ('brave','Brave')]],
                         on_select=lambda e: self.change_browser_session(e.control.value)),
-                    self.secondary('If Chrome is open, Windows may lock its cookie database. Switch off, close Chrome, or use a Netscape cookies.txt file.', 11),
+                    self.secondary('If Chrome is open, the browser may lock its cookie database. Switch off, close Chrome, or use a Netscape cookies.txt file.', 11),
                     ft.Row(spacing=12, controls=[
                         self._cookie_file_field,
                         self.button(content='Browse file', on_click=lambda e: self.page.run_task(self.browse_cookie_file)),
@@ -1766,7 +1764,7 @@ class VocaflopUI:
                 path = await asyncio.to_thread(stage_app_update, update)
                 self.pending_app_update = None
                 self.page.show_dialog(ft.AlertDialog(title=ft.Text("Update downloaded"),
-                    content=ft.Text(f"Installer saved: {path}\nClose Vocaflop before running it."),
+                    content=ft.Text(f"Installer saved: {path}\nClose Vocaflop before installing the downloaded update."),
                     actions=[self.button(content="Close", on_click=lambda e: self.page.pop_dialog())]))
         except Exception as ex:
             self.notice(f"Update failed: {ex}", error=True)

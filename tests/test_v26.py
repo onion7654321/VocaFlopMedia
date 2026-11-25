@@ -11,7 +11,9 @@ class V26Tests(unittest.TestCase):
         self.assertFalse(can_download('https://vimeo.com/123'))
         self.assertFalse(can_download('https://threads.net/@abc/post/123'))
 
-    def test_latest_deno_detected(self):
+    @patch("app.platforms.system", return_value="Windows")
+    @patch("app.platforms.architecture", return_value="x64")
+    def test_latest_deno_detected(self, *mocks):
         release = {'tag_name': 'v2.6.0', 'assets': [
             {'name': 'deno-x86_64-pc-windows-msvc.zip', 'digest': 'sha256:'+'a'*64,
              'browser_download_url': 'https://github.com/denoland/deno/releases/download/v2.6.0/demo.zip'}]}
@@ -22,7 +24,9 @@ class V26Tests(unittest.TestCase):
              patch('app.tool_updates._version', return_value='2.6.0'):
             self.assertFalse(check_deno()['needs_update'])
 
-    def test_ffmpeg_stable_branch_version_not_daily_nightly(self):
+    @patch("app.tool_updates.system", return_value="Windows")
+    @patch("app.tool_updates.architecture", return_value="x64")
+    def test_ffmpeg_stable_branch_version_not_daily_nightly(self, *mocks):
         release = {'assets': [
             {'name': 'ffmpeg-n8.1-latest-win64-gpl-8.1.zip'},
             {'name': 'ffmpeg-n9.0-latest-win64-gpl-9.0.zip'},

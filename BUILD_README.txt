@@ -1,4 +1,4 @@
-VOCAFLOP 2.11.6 — WINDOWS BUILD AND GITHUB RELEASE
+VOCAFLOP 2.12.0 — WINDOWS BUILD AND GITHUB RELEASE
 
 Build (Windows 10/11 x64)
 1. Install Python 3.11 or 3.12 (64-bit).
@@ -7,10 +7,10 @@ Build (Windows 10/11 x64)
 4. Double-click build_exe_windows.bat. It runs the unit tests and packages the app.
 5. The output is dist\Vocaflop\Vocaflop.exe. Keep the entire dist\Vocaflop folder.
 6. Test the packaged app on a clean Windows machine before publishing.
-7. Run package_release_windows.bat to create release\Vocaflop-2.11.6-Windows-x64.zip and release\SHA256SUMS.txt.
+7. Run package_release_windows.bat to create release\Vocaflop-2.12.0-Windows-x64.zip and release\SHA256SUMS.txt.
 
 PowerShell commands for a portable release archive (from project root):
-  Compress-Archive -Path .\dist\Vocaflop -DestinationPath .\Vocaflop-2.11.6-Windows-x64.zip -Force
+  Compress-Archive -Path .\dist\Vocaflop -DestinationPath .\Vocaflop-2.12.0-Windows-x64.zip -Force
 
 Tools are not bundled by the build script. Install them separately or configure existing tools in Settings. Official downloads:
   https://github.com/yt-dlp/yt-dlp/releases
@@ -30,7 +30,7 @@ GitHub source repository
   git remote add origin https://github.com/YOUR_USERNAME/Vocaflop.git
   git push -u origin main
 3. Choose a license for your own source when ready; third-party terms still apply.
-4. On GitHub, open Releases > Draft a new release. Create tag v2.11.6, give it a title, add release notes and upload the Windows ZIP from above. Publish the release after testing.
+4. On GitHub, open Releases > Draft a new release. Create tag v2.12.0, give it a title, add release notes and upload the Windows ZIP from above. Publish the release after testing.
 
 Do not commit credentials, cookies, personal settings, history, .venv, compiled caches or external binaries. The included .gitignore excludes common generated files. Review git status before committing.
 

@@ -61,6 +61,8 @@ def resolve_tool(name: str, settings: dict | None = None) -> Path | None:
                 if candidate.is_file():
                     return candidate.resolve()
     found = shutil.which(exe)
+    if not found and sys.platform == 'darwin':
+        found = next((str(p) for d in ('/opt/homebrew/bin', '/usr/local/bin') if (p := Path(d) / exe).is_file() and os.access(p, os.X_OK)), None)
     return Path(found).resolve() if found else None
 
 

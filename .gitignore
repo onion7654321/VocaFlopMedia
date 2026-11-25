@@ -1,76 +1,32 @@
-
-# Python
-__pycache__/
-*.py[cod]
 .venv/
 venv/
-env/
-
-# Build and release
-build/
-dist/
-release/
-*.spec
-*.exe
-*.dll
-*.zip
-
-# External tools
-tools/
-
-# Testing
+__pycache__/
+*.py[cod]
 .pytest_cache/
-.coverage
-htmlcov/
-.ruff_cache/
 .mypy_cache/
-
-# IDE
 .vscode/
 .idea/
-
-# Application data
-settings.json
-history.db
-*.sqlite
-*.sqlite3
-*.db
-*.db-wal
-*.db-shm
-*.log
-downloads/
+build/
+dist/
+*.spec
+*.zip
+*.exe
+*.dll
+tools/
+.vocaflop-partials/
 *.part
-*.ytdl
-
-# Credentials
+*.log
+*.sqlite3
+*.sqlite3-*
+settings.json
+cookies*.txt
 .env
 .env.*
-!.env.example
-cookies*.txt
 
-# Operating system
+release/
+
 .DS_Store
-Thumbs.db
-desktop.ini
-
-# Additional cache and build files
-*.egg-info/
-.eggs/
-.cache/
-.coverage.*
-
-# Temporary download files
-*.tmp
-*.temp
-*.part-Frag*
-*.crdownload
-
-# SQLite temporary files
-*.sqlite-wal
-*.sqlite-shm
-*.sqlite3-wal
-*.sqlite3-shm
-
-# Local credentials
-*.pem
-*.key
+*.tar.gz
+*.dmg
+*.app/
+.ruff_cache/

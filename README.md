@@ -69,3 +69,17 @@ Run `build_exe_windows.bat` on Windows, test the packaged application, then run 
 - Open folder from downloaded cards and history, using the actual output location.
 - Verify output files before reporting a completed job; serialize history database access across worker threads.
 - Portable Windows release archive and SHA-256 packaging helper.
+
+## 2.12.0 — Cross-platform preview
+
+Windows x64 remains the primary target. Linux x64 and macOS Intel/Apple Silicon builds are experimental until native smoke tests pass. Windows 32-bit is not supported.
+
+- Linux (Ubuntu 22.04): `sudo apt install libgtk-3-0 libmpv1 libsecret-1-0 ffmpeg`
+- macOS: `brew install ffmpeg` (install Homebrew first if needed).
+- On either platform: Python 3.12, `python3 -m venv .venv`, `source .venv/bin/activate`, `pip install -r requirements.txt`, `python main.py`.
+- Install yt-dlp and Deno through the application Update button, or provide their executable locations in Settings. FFmpeg/FFprobe updates on Unix use the system package manager.
+- Local build: `flet pack main.py --name Vocaflop --onedir --yes`.
+- GitHub Actions: Actions → Build desktop packages → Run workflow. Download artifacts after successful builds. No automatic release publication.
+- macOS packages are not Developer ID signed or notarized; distribute only after testing and arranging signing where appropriate. Linux desktop libraries are not bundled.
+- Automatic shutdown is available on Windows and systemd Linux (subject to system permissions), not macOS.
+- App updates are downloaded for manual installation; manifest URLs must refer to the appropriate OS/architecture package.

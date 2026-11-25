@@ -21,6 +21,7 @@ from .models import DownloadJob
 from .filenames import safe_name, rename_file
 from .formats import AUDIO_FORMATS, VIDEO_FORMATS, LOSSLESS_FORMATS, output_extension
 from . import __version__
+from .platforms import ytdlp_asset
 
 YTDLP_PATH = BIN_DIR / ("yt-dlp.exe" if os.name == "nt" else "yt-dlp")
 RELEASE_API = "https://api.github.com/repos/yt-dlp/yt-dlp/releases/latest"
@@ -192,7 +193,7 @@ def readable_error(raw: str) -> str:
         return ('FFmpeg received invalid media data. The source may have returned a blocked or partial stream. '
                 'Retry once, update yt-dlp, or try a different available format.')
     if 'ffprobe not found' in txt or ('ffprobe' in txt and 'not found' in txt):
-        return 'FFprobe is missing. Place ffprobe.exe next to ffmpeg.exe in Tools.'
+        return 'FFprobe is missing. Place ffprobe next to ffmpeg in Tools.'
     if 'javascript' in txt or 'challenge' in txt or 'deno' in txt:
         return ('JavaScript challenge failed. Update yt-dlp, verify Deno 2.3+, and retry.' if resolve_tool('deno') else
                 'A JavaScript challenge may require Deno. Set its folder under Settings → Tools & updates.')
@@ -247,7 +248,7 @@ def check_ytdlp_update() -> dict:
 def install_ytdlp(on_progress: Callable[[int], None] | None = None) -> str:
     """Install verified standalone yt-dlp binary atomically."""
     release = _fetch_release()
-    exe_name = YTDLP_PATH.name
+    exe_name = ytdlp_asset()
     asset = next((a for a in release.get("assets", []) if a.get("name") == exe_name), None)
     if not asset:
         raise RuntimeError(f"No {exe_name} in the official release.")
@@ -514,7 +515,8 @@ def check_app_update(manifest_url: str) -> dict | None:
 def stage_app_update(update: dict) -> Path:
     folder = APP_DIR / "updates"
     folder.mkdir(parents=True, exist_ok=True)
-    out = folder / f"Vocaflop_{re.sub('[^a-zA-Z0-9_.-]', '_', update['version'])}.exe"
+    suffix = next((x for x in (".tar.gz", ".zip", ".dmg", ".exe") if urlparse(update["url"]).path.lower().endswith(x)), ".downloaded")
+    out = folder / f"Vocaflop_{re.sub('[^a-zA-Z0-9_.-]', '_', update['version'])}{suffix}"
     temp = out.with_suffix(".download")
     h = hashlib.sha256()
     size = 0

@@ -1,2 +1,2 @@
 """Vocaflop desktop application."""
-__version__ = "2.11.6"
+__version__ = "2.12.0"
