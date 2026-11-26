@@ -9,7 +9,7 @@ from app import toolchain
 class RelocatedToolsTests(unittest.TestCase):
     def test_tools_folder_with_nested_deno_ffmpeg(self):
         with tempfile.TemporaryDirectory() as temp:
-            root = Path(temp) / 'VOC AFLOP'
+            root = Path(temp).resolve() / 'VOC AFLOP'
             tools = root / 'tools'
             for relative in ('deno', 'ffmpeg/bin'):
                 (tools / relative).mkdir(parents=True, exist_ok=True)

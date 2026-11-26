@@ -3,6 +3,8 @@ set -euo pipefail
 version="$1"
 test "$(uname -m)" = x86_64
 test -x dist/Vocaflop/Vocaflop
+command -v desktop-file-validate >/dev/null
+desktop-file-validate packaging/vocaflop.desktop
 mkdir -p release build
 stage=build/deb-stage
 rm -rf "$stage"
@@ -25,6 +27,7 @@ rm -rf "$appdir"
 mkdir -p "$appdir/usr/bin"
 cp -a dist/Vocaflop/. "$appdir/usr/bin/"
 cp packaging/vocaflop.desktop "$appdir/"
+ln -s Vocaflop "$appdir/usr/bin/vocaflop"
 cp assets/logo.png "$appdir/vocaflop.png"
 cat > "$appdir/AppRun" <<'EOF'
 #!/bin/sh
