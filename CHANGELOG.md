@@ -1,5 +1,8 @@
 # Changelog
 
+## 2.13.1
+- Updated application and installer icons for Windows, Linux and macOS.
+
 ## 2.13.0
 - Native packaging entry point and project metadata in pyproject.toml.
 - Windows installer/portable, Linux AppImage/DEB/tar.gz, and macOS DMG build configuration.
